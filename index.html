@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stopwatch & Timer</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+      transition: 0.3s ease;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: #fff;
+    }
+
+    body.light {
+      background: linear-gradient(135deg, #f9f9f9, #e0e0e0);
+      color: #222;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      padding: 2rem;
+      border-radius: 20px;
+      text-align: center;
+      width: 330px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    body.light .container {
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .display {
+      font-size: 2.5rem;
+      margin: 1rem 0;
+      letter-spacing: 2px;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background-color: #00b4d8;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background-color: #0077b6;
+    }
+
+    body.light button {
+      background-color: #333;
+      color: #fff;
+    }
+
+    body.light button:hover {
+      background-color: #555;
+    }
+
+    #laps {
+      margin-top: 20px;
+      max-height: 120px;
+      overflow-y: auto;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    #laps li {
+      list-style: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 0;
+    }
+
+    input[type="number"] {
+      width: 70px;
+      padding: 5px;
+      border: none;
+      border-radius: 6px;
+      margin: 5px;
+      text-align: center;
+    }
+
+    .mode-toggle {
+      margin-bottom: 15px;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    body.light .theme-toggle {
+      border-color: #333;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" id="themeToggle">🌙</button>
+
+  <div class="container">
+    <h1 id="modeTitle">⏱ Stopwatch</h1>
+
+    <div class="mode-toggle">
+      <button id="stopwatchMode">Stopwatch</button>
+      <button id="timerMode">Countdown Timer</button>
+    </div>
+
+    <div class="display" id="display">00:00:00</div>
+
+    <div id="timerInputs" style="display: none;">
+      <input type="number" id="hours" placeholder="HH" min="0" />
+      <input type="number" id="minutes" placeholder="MM" min="0" max="59" />
+      <input type="number" id="seconds" placeholder="SS" min="0" max="59" />
+    </div>
+
+    <div class="buttons">
+      <button id="start">Start</button>
+      <button id="pause">Pause</button>
+      <button id="reset">Reset</button>
+      <button id="lap">Lap</button>
+    </div>
+
+    <ul id="laps"></ul>
+  </div>
+
+  <script>
+    let mode = "stopwatch";
+    let startTime = 0;
+    let elapsedTime = 0;
+    let timerInterval;
+    let countdownTime = 0;
+    let remainingTime = 0;
+
+    const display = document.getElementById("display");
+    const laps = document.getElementById("laps");
+    const modeTitle = document.getElementById("modeTitle");
+    const timerInputs = document.getElementById("timerInputs");
+
+    function formatTime(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
+      const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, "0");
+      const seconds = String(totalSeconds % 60).padStart(2, "0");
+      return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function start() {
+      if (mode === "stopwatch") {
+        startTime = Date.now() - elapsedTime;
+        timerInterval = setInterval(() => {
+          elapsedTime = Date.now() - startTime;
+          display.textContent = formatTime(elapsedTime);
+        }, 1000);
+      } else {
+        const h = parseInt(document.getElementById("hours").value) || 0;
+        const m = parseInt(document.getElementById("minutes").value) || 0;
+        const s = parseInt(document.getElementById("seconds").value) || 0;
+        countdownTime = (h * 3600 + m * 60 + s) * 1000;
+        remainingTime = remainingTime || countdownTime;
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+          const diff = Date.now() - startTime;
+          remainingTime = countdownTime - diff;
+          if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            display.textContent = "00:00:00";
+            alert("⏰ Time’s up!");
+          } else {
+            display.textContent = formatTime(remainingTime);
+          }
+        }, 1000);
+      }
+      document.getElementById("start").disabled = true;
+    }
+
+    function pause() {
+      clearInterval(timerInterval);
+      document.getElementById("start").disabled = false;
+      if (mode === "timer") countdownTime = remainingTime;
+    }
+
+    function reset() {
+      clearInterval(timerInterval);
+      elapsedTime = 0;
+      remainingTime = 0;
+      display.textContent = "00:00:00";
+      laps.innerHTML = "";
+      document.getElementById("start").disabled = false;
+    }
+
+    function recordLap() {
+      if (mode === "stopwatch" && elapsedTime > 0) {
+        const li = document.createElement("li");
+        li.textContent = `Lap ${laps.children.length + 1}: ${formatTime(elapsedTime)}`;
+        laps.appendChild(li);
+      }
+    }
+
+    // Mode switching
+    document.getElementById("stopwatchMode").addEventListener("click", () => {
+      mode = "stopwatch";
+      modeTitle.textContent = "⏱ Stopwatch";
+      timerInputs.style.display = "none";
+      reset();
+    });
+
+    document.getElementById("timerMode").addEventListener("click", () => {
+      mode = "timer";
+      modeTitle.textContent = "⏳ Countdown Timer";
+      timerInputs.style.display = "block";
+      reset();
+    });
+
+    // Theme toggle
+    const themeToggle = document.getElementById("themeToggle");
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("light");
+      themeToggle.textContent = document.body.classList.contains("light") ? "☀️" : "🌙";
+    });
+
+    // Button events
+    document.getElementById("start").addEventListener("click", start);
+    document.getElementById("pause").addEventListener("click", pause);
+    document.getElementById("reset").addEventListener("click", reset);
+    document.getElementById("lap").addEventListener("click", recordLap);
+  </script>
+</body>
+</html>
